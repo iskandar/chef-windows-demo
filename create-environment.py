@@ -20,8 +20,8 @@ export NODE_PASSWORD=iojl3458lkjalsdfkj
 '''
 
 # Consume our environment vars
-app_name = os.environ.get('NAMESPACE', 'wan')
-environment_name = os.environ.get('ENVIRONMENT', 'dev')
+app_name = os.environ.get('NAMESPACE', 'win')
+environment_name = os.environ.get('ENVIRONMENT', 'stg')
 initial_policy = os.environ.get('INITIAL_POLICY', 'Set to 2')
 node_username = os.environ.get('NODE_USERNAME', 'localadmin')
 node_password = os.environ.get('NODE_PASSWORD', 'Q1w2e3r4')
@@ -199,6 +199,9 @@ if wait:
         print("Scaling Group State: ", json.dumps(state), file=sys.stderr)
 
         if state["pending_capacity"] == 0:
+            if state["active_capacity"] == 0:
+                print("ASG pending_capacity went to zero, but no active nodes! Something has gone wrong")
+                sys.exit(1)
             break
         time.sleep(10)
 
