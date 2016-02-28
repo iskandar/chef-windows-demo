@@ -6,6 +6,8 @@ import time
 import json
 import sys
 from jinja2 import Template
+import urlparse
+import urllib
 
 '''
 Example Env vars:
@@ -13,9 +15,43 @@ Example Env vars:
 export OS_USERNAME=YOUR_USERNAME
 export OS_REGION=LON
 export OS_API_KEY=fc8234234205234242ad8f4723426cfe
-export NODE_CALLBACK_URL="http://jenkins.server/buildByToken/buildWithParameters?job=chef-windows-demo/bootstrap-node&token=1234123123&NODE_IP=\$PublicIp&NODE_NAME=\$Hostname"
+export NODE_CALLBACK_URL="http://jenkins.server/buildByToken/buildWithParameters?job=chef-windows-demo/chef-bootstrap&token=1234123123&NODE_IP=\$PublicIp&NODE_NAME=\$Hostname"
 export NODE_PASSWORD=iojl3458lkjalsdfkj
 '''
+
+# Consume our environment vars
+app_name = os.environ.get('NAMESPACE', 'wan')
+environment_name = os.environ.get('ENVIRONMENT', 'dev')
+initial_policy = os.environ.get('INITIAL_POLICY', 'Set to 2')
+node_username = os.environ.get('NODE_USERNAME', 'localadmin')
+node_password = os.environ.get('NODE_PASSWORD', 'Q1w2e3r4')
+image_id = os.environ.get('NODE_IMAGE_ID', "a35e8afc-cae9-4e38-8441-2cd465f79f7b")
+flavor_id = os.environ.get('NODE_FLAVOR_ID', "general1-2")
+
+# Set up a callback URL that our node will request after booting up. This can be used to trigger bootstrapping.
+# $PublicIp and $Hostname vars are populated in the Powershell 'run.txt' script.
+default_node_callback_url = "http://requestb.in/18vsdkl1?NODE_IP=$PublicIp&NODE_NAME=$Hostname"
+node_callback_url = os.environ.get('NODE_CALLBACK_URL', default_node_callback_url)
+
+# Parse the callback URL and add new vars
+url_parts = urlparse.urlparse(node_callback_url)
+
+query_vars = urlparse.parse_qsl(url_parts.query)
+query_vars.append(['NAMESPACE', app_name])
+query_vars.append(['ENVIRONMENT', environment_name])
+query_vars.append(['INITIAL_POLICY', initial_policy])
+query_vars.append(['NODE_IMAGE_ID', image_id])
+query_vars.append(['NODE_FLAVOR_ID', flavor_id])
+query_vars.append(['NODE_USERNAME', node_username])
+
+node_callback_url = urlparse.urlunparse([
+    url_parts.scheme,
+    url_parts.netloc,
+    url_parts.path,
+    url_parts.params,
+    urllib.urlencode(query_vars).replace('%24', '$').replace('%2F', '/'),
+    None
+])
 
 # Authenticate
 pyrax.set_setting("identity_type", "rackspace")
@@ -27,20 +63,6 @@ cs = pyrax.cloudservers
 cnw = pyrax.cloud_networks
 clb = pyrax.cloud_loadbalancers
 au = pyrax.autoscale
-
-# Consume our environment vars
-app_name = os.environ.get('NAMESPACE', 'wan')
-environment_name = os.environ.get('ENVIRONMENT', 'dev')
-node_username = os.environ.get('NODE_USERNAME', 'localadmin')
-node_password = os.environ.get('NODE_PASSWORD', 'Q1w2e3r4')
-image_id = os.environ.get('NODE_IMAGE_ID', "a35e8afc-cae9-4e38-8441-2cd465f79f7b")
-flavor_id = os.environ.get('NODE_FLAVOR_ID', "general1-2")
-initial_policy = os.environ.get('INITIAL_POLICY', 'Set to 2')
-
-# Set up a callback URL that our node will request after booting up. This can be used to trigger bootstrapping.
-# $PublicIp and $Hostname vars are populated in the Powershell 'run.txt' script.
-default_node_callback_url = "http://requestb.in/18vsdkl1?NODE_IP=$PublicIp&NODE_NAME=$Hostname"
-node_callback_url = os.environ.get('NODE_CALLBACK_URL', default_node_callback_url)
 
 # Derived names
 asg_name = app_name + "-" + environment_name
@@ -105,6 +127,20 @@ health_monitor = {
 lb = clb.create(lb_name, port=80, protocol="HTTP",
                 nodes=[], virtual_ips=[clb.VirtualIP(type="PUBLIC")],
                 algorithm="ROUND_ROBIN", healthMonitor=health_monitor)
+
+error_page = '''
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<title>No servers available yet</title>
+<style type="text/css">
+body, p, h1 {font-family: Verdana, Arial, Helvetica, sans-serif;}
+h2 {font-family: Arial, Helvetica;}
+</style>
+</head><body>
+<h2>No servers available yet</h2>
+<p>Hang in there! Servers are doing stuff right behind the scenes right now.</p>
+</body></html>
+'''
+lb.set_error_page(error_page)
 
 # Add Scaling Policies
 policies = [
