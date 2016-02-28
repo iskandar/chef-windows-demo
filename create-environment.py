@@ -27,11 +27,42 @@ node_username = os.environ.get('NODE_USERNAME', 'localadmin')
 node_password = os.environ.get('NODE_PASSWORD', 'Q1w2e3r4')
 image_id = os.environ.get('NODE_IMAGE_ID', "a35e8afc-cae9-4e38-8441-2cd465f79f7b")
 flavor_id = os.environ.get('NODE_FLAVOR_ID', "general1-2")
+domain_name = os.environ.get('DOMAIN_NAME', None)
 
 # Set up a callback URL that our node will request after booting up. This can be used to trigger bootstrapping.
 # $PublicIp and $Hostname vars are populated in the Powershell 'run.txt' script.
 default_node_callback_url = "http://requestb.in/18vsdkl1?NODE_IP=$PublicIp&NODE_NAME=$Hostname"
 node_callback_url = os.environ.get('NODE_CALLBACK_URL', default_node_callback_url)
+
+# Authenticate
+pyrax.set_setting("identity_type", "rackspace")
+pyrax.set_setting("region", os.environ.get('OS_REGION', "LON"))
+pyrax.set_credentials(os.environ.get('OS_USERNAME'), os.environ.get('OS_API_KEY'))
+
+# Set up some aliases
+cs = pyrax.cloudservers
+cnw = pyrax.cloud_networks
+clb = pyrax.cloud_loadbalancers
+au = pyrax.autoscale
+dns = pyrax.cloud_dns
+
+# Derived names
+asg_name = app_name + "-" + environment_name
+lb_name = asg_name + '-lb'
+node_name = asg_name
+subdomain_name = asg_name
+
+# Other params
+wait = True
+wait_timeout = 1800
+
+# Prepare data for server 'personalities', which is the only way to inject files and bootstrap Windows Servers
+# in the Rackspace Public Cloud (as of 2016-03)
+# Warning: If the contents of these files are too long (1000 bytes each?), then no servers will be created!
+personalities = [
+    {"source" : "./bootstrap/personality/bootstrap.cmd", "destination": "C:\\cloud-automation\\bootstrap.cmd"},
+    {"source" : "./bootstrap/personality/run.txt", "destination": "C:\\cloud-automation\\run.txt"},
+]
 
 # Parse the callback URL and add new vars
 url_parts = urlparse.urlparse(node_callback_url)
@@ -54,34 +85,6 @@ node_callback_url = urlparse.urlunparse([
     None
 ])
 
-# Authenticate
-pyrax.set_setting("identity_type", "rackspace")
-pyrax.set_setting("region", os.environ.get('OS_REGION', "LON"))
-pyrax.set_credentials(os.environ.get('OS_USERNAME'), os.environ.get('OS_API_KEY'))
-
-# Set up some aliases
-cs = pyrax.cloudservers
-cnw = pyrax.cloud_networks
-clb = pyrax.cloud_loadbalancers
-au = pyrax.autoscale
-
-# Derived names
-asg_name = app_name + "-" + environment_name
-lb_name = asg_name + '-lb'
-node_name = asg_name
-
-# Other params
-wait = True
-wait_timeout = 1800
-
-# Prepare data for server 'personalities', which is the only way to inject files and bootstrap Windows Servers
-# in the Rackspace Public Cloud (as of 2016-03)
-# Warning: If the contents of these files are too long (1000 bytes each?), then no servers will be created!
-personalities = [
-    {"source" : "./bootstrap/personality/bootstrap.cmd", "destination": "C:\\cloud-automation\\bootstrap.cmd"},
-    {"source" : "./bootstrap/personality/run.txt", "destination": "C:\\cloud-automation\\run.txt"},
-]
-
 # Use templating with our personality files
 template_vars = {
     "rackspace_username": os.environ.get('OS_USERNAME'),
@@ -89,6 +92,8 @@ template_vars = {
     "environment_name": environment_name,
     "asg_name": asg_name,
     "lb_name": lb_name,
+    "domain_name": domain_name,
+    "subdomain_name": subdomain_name,
     "node_base_name": node_name,
     "node_username": node_username,
     "node_password": node_password,
@@ -130,6 +135,30 @@ lb = clb.create(lb_name, port=80, protocol="HTTP",
                 nodes=[], virtual_ips=[clb.VirtualIP(type="PUBLIC")],
                 algorithm="ROUND_ROBIN", healthMonitor=health_monitor)
 
+if domain_name is not None:
+    # Set up a DNS subdomain
+    dns_records = []
+    filtered = (vip for vip in lb.virtual_ips if vip.type == 'PUBLIC' and vip.ip_version == 'IPV4')
+    for vip in filtered:
+        dns_records.append({
+            "type": "A",
+            "name": subdomain_name + "." + domain_name,
+            "data": vip.address,
+            "ttl": 300,
+        })
+
+    print("", file=sys.stderr)
+    print("--- Adding DNS Records", file=sys.stderr)
+    print(repr(dns_records), file=sys.stderr)
+    print("---", file=sys.stderr)
+
+    # Look for our base domain
+    filtered = (dom for dom in dns.list() if dom.name == domain_name)
+    for dom in filtered:
+        # Add our DNS records
+        dom.add_records(dns_records)
+        break
+
 # Add Scaling Policies
 policies = [
     { "name": "Up by 1", "change": 1, "desired_capacity": None, "is_percent": False },
@@ -170,7 +199,7 @@ for p in policies:
                            p["is_percent"], desired_capacity=p["desired_capacity"])
     webhook = policy.add_webhook(p["name"] + ' webhook')
     if p["name"] == initial_policy:
-        print("Executing policy", policy.id)
+        print("Executing policy", initial_policy, policy.id)
         policy.execute()
 
 '''
@@ -192,6 +221,7 @@ h2 {font-family: Arial, Helvetica;}
 # lb.set_error_page(error_page)
 # lb_state = lb.get_state()
 # print(repr(lb_state))
+
 
 if wait:
     end_time = time.time() + wait_timeout
