@@ -128,20 +128,6 @@ lb = clb.create(lb_name, port=80, protocol="HTTP",
                 nodes=[], virtual_ips=[clb.VirtualIP(type="PUBLIC")],
                 algorithm="ROUND_ROBIN", healthMonitor=health_monitor)
 
-error_page = '''
-<html><head><meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-<title>No servers available yet</title>
-<style type="text/css">
-body, p, h1 {font-family: Verdana, Arial, Helvetica, sans-serif;}
-h2 {font-family: Arial, Helvetica;}
-</style>
-</head><body>
-<h2>No servers available yet</h2>
-<p>Hang in there! Servers are doing stuff right behind the scenes right now.</p>
-</body></html>
-'''
-lb.set_error_page(error_page)
-
 # Add Scaling Policies
 policies = [
     { "name": "Up by 1", "change": 1, "desired_capacity": None, "is_percent": False },
@@ -185,12 +171,33 @@ for p in policies:
         print("Executing policy", policy.id)
         policy.execute()
 
+'''
+Try to update the LB error page with a friendlier version.
+@FIXME This is timing-based - it should wait for the LB to come out of the 'immutable' state!
+'''
+error_page = '''
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<title>No servers available yet</title>
+<style type="text/css">
+body, p, h1 {font-family: Verdana, Arial, Helvetica, sans-serif;}
+h2 {font-family: Arial, Helvetica;}
+</style>
+</head><body>
+<h2>No servers available yet</h2>
+<p>Hang in there! Servers are doing stuff right behind the scenes right now.</p>
+</body></html>
+'''
+lb.set_error_page(error_page)
+# lb_state = lb.get_state()
+# print(repr(lb_state))
+
 if wait:
     end_time = time.time() + wait_timeout
     infinite = wait_timeout == 0
     while infinite or time.time() < end_time:
         state = sg.get_state()
         print("Scaling Group State: ", json.dumps(state), file=sys.stderr)
+
         if state["pending_capacity"] == 0:
             break
         time.sleep(10)
