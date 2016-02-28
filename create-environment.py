@@ -35,6 +35,7 @@ node_username = os.environ.get('NODE_USERNAME', 'localadmin')
 node_password = os.environ.get('NODE_PASSWORD', 'Q1w2e3r4')
 image_id = os.environ.get('NODE_IMAGE_ID', "a35e8afc-cae9-4e38-8441-2cd465f79f7b")
 flavor_id = os.environ.get('NODE_FLAVOR_ID', "general1-2")
+min_entitites = int(os.environ.get('MIN_NODES', 1))
 
 # Set up a callback URL that our node will request after booting up. This can be used to trigger bootstrapping.
 # $PublicIp and $Hostname vars are populated in the Powershell 'run.txt' script.
@@ -129,7 +130,7 @@ metadata = {
 }
 sg = au.create(asg_name,
                cooldown=60,
-               min_entities=1, max_entities=16,
+               min_entities=min_entitites, max_entities=16,
                launch_config_type="launch_server",
                server_name=node_name,
                image=image_id,
