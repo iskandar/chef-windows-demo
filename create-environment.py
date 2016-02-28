@@ -48,7 +48,7 @@ node_name = asg_name
 
 # Other params
 wait = True
-wait_timeout = 600
+wait_timeout = 1800
 
 # Prepare data for server 'personalities', which is the only way to inject files and bootstrap Windows Servers
 # in the Rackspace Public Cloud (as of 2016-03)
