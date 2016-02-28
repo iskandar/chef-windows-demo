@@ -39,10 +39,11 @@ url_parts = urlparse.urlparse(node_callback_url)
 query_vars = urlparse.parse_qsl(url_parts.query)
 query_vars.append(['NAMESPACE', app_name])
 query_vars.append(['ENVIRONMENT', environment_name])
-query_vars.append(['INITIAL_POLICY', initial_policy])
-query_vars.append(['NODE_IMAGE_ID', image_id])
-query_vars.append(['NODE_FLAVOR_ID', flavor_id])
-query_vars.append(['NODE_USERNAME', node_username])
+# We can't add too much data because this will cause the size of our personality file to grow too large!
+# query_vars.append(['INITIAL_POLICY', initial_policy])
+# query_vars.append(['NODE_IMAGE_ID', image_id])
+# query_vars.append(['NODE_FLAVOR_ID', flavor_id])
+# query_vars.append(['NODE_USERNAME', node_username])
 
 node_callback_url = urlparse.urlunparse([
     url_parts.scheme,
@@ -75,6 +76,7 @@ wait_timeout = 1800
 
 # Prepare data for server 'personalities', which is the only way to inject files and bootstrap Windows Servers
 # in the Rackspace Public Cloud (as of 2016-03)
+# Warning: If the contents of these files are too long (1000 bytes each?), then no servers will be created!
 personalities = [
     {"source" : "./bootstrap/personality/bootstrap.cmd", "destination": "C:\\cloud-automation\\bootstrap.cmd"},
     {"source" : "./bootstrap/personality/run.txt", "destination": "C:\\cloud-automation\\run.txt"},
