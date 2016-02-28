@@ -10,22 +10,25 @@ from jinja2 import Template
 Example Env vars:
 
 export OS_USERNAME=YOUR_USERNAME
+export OS_REGION=LON
 export OS_API_KEY=fc8234234205234242ad8f4723426cfe
 export NODE_CALLBACK_URL="http://jenkins.server/buildByToken/buildWithParameters?job=chef-windows-demo/bootstrap-node&token=1234123123&NODE_IP=\$PublicIp&NODE_NAME=\$Hostname"
 export NODE_PASSWORD=iojl3458lkjalsdfkj
 '''
 
+# Authenticate
+pyrax.set_setting("identity_type", "rackspace")
+pyrax.set_setting("region", os.environ.get('OS_REGION', "LON"))
+pyrax.set_credentials(os.environ.get('OS_USERNAME'), os.environ.get('OS_API_KEY'))
+
 # Set up some aliases
 cs = pyrax.cloudservers
-cnw = pyrax.cloudnetworks
+cnw = pyrax.cloud_networks
 clb = pyrax.cloud_loadbalancers
 au = pyrax.autoscale
 
-pyrax.set_setting("identity_type", "rackspace")
-pyrax.set_credentials(os.environ.get('OS_USERNAME'), os.environ.get('OS_API_KEY'))
-
 # Consume our environment vars
-app_name = os.environ.get('NAMESPACE', 'wbn')
+app_name = os.environ.get('NAMESPACE', 'wan')
 environment_name = os.environ.get('ENVIRONMENT', 'dev')
 node_username = os.environ.get('NODE_USERNAME', 'localadmin')
 node_password = os.environ.get('NODE_PASSWORD', 'Q1w2e3r4')
@@ -58,7 +61,6 @@ template_vars = {
     "rackspace_username": os.environ.get('OS_USERNAME'),
     "app_name": app_name,
     "environment_name": environment_name,
-    "app_name": app_name,
     "asg_name": asg_name,
     "lb_name": lb_name,
     "node_base_name": node_name,
