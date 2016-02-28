@@ -50,7 +50,7 @@ base_params = {
     "token": deploy_job_token,
     "NAMESPACE": app_name,
     "ENVIRONMENT": environment_name,
-    "PARENT_BUILD_NUMBER": environment_name,
+    "PARENT_BUILD_NUMBER": parent_build_number,
     "NODE_IP": "",
     "NODE_NAME": ""
 }
