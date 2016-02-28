@@ -173,7 +173,6 @@ for p in policies:
 
 '''
 Try to update the LB error page with a friendlier version.
-@FIXME This is timing-based - it should wait for the LB to come out of the 'immutable' state!
 '''
 error_page = '''
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=utf-8">
@@ -187,7 +186,8 @@ h2 {font-family: Arial, Helvetica;}
 <p>Hang in there! Servers are doing stuff right behind the scenes right now.</p>
 </body></html>
 '''
-lb.set_error_page(error_page)
+# @FIXME This is timing-based - it should wait for the LB to come out of the 'immutable' state!
+# lb.set_error_page(error_page)
 # lb_state = lb.get_state()
 # print(repr(lb_state))
 
