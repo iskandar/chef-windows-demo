@@ -10,9 +10,9 @@ $Hostname = $env:COMPUTERNAME
 Write-Host "Got Hostname $Hostname"
 
 # Make a callback
-# Example: "http://requestb.in/1cx1abg1?shared_token=OSF234RLKJ478SDF&NODE_IP=$PublicIp&NODE_NAME=$Hostname"
-Write-Host "Using callback: {{ node_callback_url }}"
-Invoke-Restmethod -Uri "{{ node_callback_url }}"
+$NodeCallBackUrl="{{ node_callback_url }}"
+Write-Host "Using callback: $NodeCallBackUrl"
+Invoke-Restmethod -Uri $NodeCallBackUrl
 
 # @TODO Set up w32time/NTP
 

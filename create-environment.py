@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import pyrax
 import os
 import time
@@ -68,6 +69,10 @@ template_vars = {
     "node_password": node_password,
     "node_callback_url": node_callback_url,
 }
+print("", file=sys.stderr)
+print("--- Params", file=sys.stderr)
+print(json.dumps(template_vars), file=sys.stderr)
+print("---", file=sys.stderr)
 
 # Build personality list with content
 personality_list = []
@@ -80,8 +85,10 @@ for p in personalities:
         "contents": template.render(template_vars),
     })
 
-# print repr(personality_list)
-# sys.exit(0)
+print("", file=sys.stderr)
+print("--- Personalities", file=sys.stderr)
+print(json.dumps(personality_list), file=sys.stderr)
+print("---", file=sys.stderr)
 
 # Create a load balancer with a Health monitor
 health_monitor = {
@@ -113,8 +120,7 @@ policies = [
     { "name": "Set to 6", "change": None, "desired_capacity": 6, "is_percent": False },
     { "name": "Set to 8", "change": None, "desired_capacity": 8, "is_percent": False },
 ]
-print repr(policies)
-
+# print repr(policies)
 
 metadata = {
     "environment": environment_name,
@@ -144,13 +150,13 @@ if wait:
     infinite = wait_timeout == 0
     while infinite or time.time() < end_time:
         state = sg.get_state()
-        print repr(state)
+        print("Scaling Group State: ", json.dumps(state), file=sys.stderr)
         if state["pending_capacity"] == 0:
             break
         time.sleep(10)
 
-print json.dumps({
+print(json.dumps({
     "id": sg.id,
     "name": asg_name,
     "metadata": metadata,
-})
+}))
