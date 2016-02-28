@@ -22,6 +22,7 @@ role_name = os.environ.get('ROLE', 'web')
 deploy_job_base_url = os.environ.get('DEPLOY_JOB_BASE_URL', 'http://requestb.in/')
 deploy_job_name = os.environ.get('DEPLOY_JOB_NAME', '1c5vufz1')
 deploy_job_token = os.environ.get('DEPLOY_JOB_TOKEN', 'SECRET')
+parent_build_number = os.environ.get('BUILD_NUMBER', None)
 
 # Filter our nodes on app, environment, and role metadata
 filtered = (node for node in cs.list() if
@@ -49,6 +50,7 @@ base_params = {
     "token": deploy_job_token,
     "NAMESPACE": app_name,
     "ENVIRONMENT": environment_name,
+    "PARENT_BUILD_NUMBER": environment_name,
     "NODE_IP": "",
     "NODE_NAME": ""
 }
