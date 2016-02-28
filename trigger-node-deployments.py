@@ -47,14 +47,16 @@ print(json.dumps(target_nodes))
 base_params = {
     "job": deploy_job_name,
     "token": deploy_job_token,
+    "NAMESPACE": app_name,
+    "ENVIRONMENT": environment_name,
     "NODE_IP": "",
     "NODE_NAME": ""
 }
 for node in target_nodes:
     # Trigger a Jenkins job
     params = copy.copy(base_params)
-    params["NODE_IP"] = node['ip'];
-    params["NODE_NAME"] = node['name'];
+    params["NODE_IP"] = node['ip']
+    params["NODE_NAME"] = node['name']
     url_values = urllib.urlencode(params)
     full_url = deploy_job_base_url + '?' + url_values
     print("Triggering job via ", full_url)
