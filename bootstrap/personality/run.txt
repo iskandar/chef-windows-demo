@@ -1,0 +1,19 @@
+
+Start-Transcript -Path C:\bootstrap_run_log.txt -Append
+
+# Get the Public IP
+$PublicIp = ((Get-NetIPConfiguration).IPv4Address | Where-Object {$_.InterfaceAlias -eq "public0"}).IpAddress
+Write-Host "Got Public IP $PublicIp"
+
+# Get the hostname
+$Hostname = $env:COMPUTERNAME
+Write-Host "Got Hostname $Hostname"
+
+# Make a callback
+# Example: "http://requestb.in/1cx1abg1?shared_token=OSF234RLKJ478SDF&NODE_IP=$PublicIp&NODE_NAME=$Hostname"
+Write-Host "Using callback: {{ node_callback_url }}"
+Invoke-Restmethod -Uri "{{ node_callback_url }}"
+
+# @TODO Set up w32time/NTP
+
+Stop-Transcript
