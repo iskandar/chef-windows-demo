@@ -99,7 +99,7 @@ health_monitor = {
     "attemptsBeforeDeactivation": 2,
     "path": "/",
     "statusRegex": "^[23][0-9][0-9]$", # We do NOT want to match 4xx responses
-    "bodyRegex": ".*"
+    "bodyRegex": ".*CHEF_WINDOWS_DEMO_APP.*" # Parse for a specific string to avoid default IIS page false positives
 }
 
 lb = clb.create(lb_name, port=80, protocol="HTTP",
