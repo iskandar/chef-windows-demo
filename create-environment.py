@@ -147,15 +147,22 @@ if domain_name is not None:
             "ttl": 300,
         })
 
-    print("", file=sys.stderr)
-    print("--- Adding DNS Records", file=sys.stderr)
-    print(repr(dns_records), file=sys.stderr)
-    print("---", file=sys.stderr)
-
     # Look for our base domain
     filtered = (dom for dom in dns.list() if dom.name == domain_name)
     for dom in filtered:
+        # Delete existing DNS records if any exist
+        print("", file=sys.stderr)
+        rec_iter = dns.get_record_iterator(dom)
+        for rec in rec_iter:
+            for add_rec in dns_records:
+                if rec.name == add_rec.name:
+                    print("Deleting DNS Records", repr(rec))
+                    rec.delete()
+
         # Add our DNS records
+        print("--- Adding DNS Records", file=sys.stderr)
+        print(repr(dns_records), file=sys.stderr)
+        print("---", file=sys.stderr)
         dom.add_records(dns_records)
         break
 
