@@ -155,7 +155,7 @@ if domain_name is not None:
         rec_iter = dns.get_record_iterator(dom)
         for rec in rec_iter:
             for add_rec in dns_records:
-                if rec.name == add_rec.name:
+                if rec.name == add_rec["name"]:
                     print("Deleting DNS Records", repr(rec))
                     rec.delete()
 
