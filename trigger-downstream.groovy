@@ -19,17 +19,22 @@ String fileContents = new File(jsonFile).getText('UTF-8')
 def nodeList = jsonSlurper.parseText(fileContents)
 println "Got nodes: " + nodeList.inspect()
 
-
 println ""
 println "----"
 nodeList.each { node ->
     def params = [
-            new StringParameterValue('NAMESPACE', resolver.resolve("NAMESPACE")),
-            new StringParameterValue('ENVIRONMENT', resolver.resolve("ENVIRONMENT")),
-            new StringParameterValue('BUILD_SELECTOR', resolver.resolve("BUILD_SELECTOR")),
             new StringParameterValue('NODE_IP', node["ip"]),
             new StringParameterValue('NODE_NAME', node["name"]),
     ]
+    if (resolver.resolve("NAMESPACE")) {
+        params << new StringParameterValue('NAMESPACE', resolver.resolve("NAMESPACE"))
+    }
+    if (resolver.resolve("ENVIRONMENT")) {
+        params << new StringParameterValue('ENVIRONMENT', resolver.resolve("ENVIRONMENT"))
+    }
+    if (resolver.resolve("BUILD_SELECTOR")) {
+        params << new StringParameterValue('BUILD_SELECTOR', resolver.resolve("BUILD_SELECTOR"))
+    }
     println "Calling " + downstreamJobName + " with params " + params.inspect()
     Hudson.instance.queue.schedule(downstreamJob, 0, causeAction, new ParametersAction(params))
 }
