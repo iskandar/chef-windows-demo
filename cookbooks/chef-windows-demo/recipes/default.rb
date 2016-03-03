@@ -15,11 +15,18 @@ directory "#{node['iis']['docroot']}/WebApplication1" do
   action :create
 end
 
+# Sets up logging
+iis_config "/section:system.applicationHost/sites /siteDefaults.logfile.directory:\"D:\\logs\"" do
+  action :set
+end
+
 # Create a new IIS Pool
 iis_pool 'WebApplication1' do
   runtime_version "4.0"
   pipeline_mode :Integrated
   pool_identity :ApplicationPoolIdentity
+  start_mode :AlwaysRunning
+  auto_start true
   load_user_profile true
   action :add
 end
