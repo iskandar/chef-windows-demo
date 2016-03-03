@@ -9,15 +9,33 @@ iis_site 'Default Web Site' do
   action [:stop]
 end
 
+# Set up logging
+directory "C:\\logs" do
+  action :create
+end
+iis_config "/section:system.applicationHost/sites /siteDefaults.logfile.directory:\"C:\\logs\"" do
+  action :set
+end
+
+# Write to a file
+file "C:\\logs\\test.txt" do
+  content 'Here is some test text'
+end
+
+# Add a registry key
+registry_key 'HKEY_LOCAL_MACHINE\SOFTWARE\CHEF_WINDOWS_DEMO' do
+  values [{
+              :name => 'HELLO',
+              :type => :expand_string,
+              :data => 'OMG WTF BBQ'
+          }]
+  action :delete
+end
+
 # Create a new directory.
 # We want this to be empty so our Load Balancer does not add this node into rotation.
 directory "#{node['iis']['docroot']}/WebApplication1" do
   action :create
-end
-
-# Sets up logging
-iis_config "/section:system.applicationHost/sites /siteDefaults.logfile.directory:\"D:\\logs\"" do
-  action :set
 end
 
 # Create a new IIS Pool
