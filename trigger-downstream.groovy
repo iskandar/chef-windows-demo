@@ -17,17 +17,6 @@ def jsonFile = currentBuild.workspace.toString() + '/nodes-' + jobNumber + '.jso
 def jsonSlurper = new JsonSlurper()
 String fileContents = new File(jsonFile).getText('UTF-8')
 def nodeList = jsonSlurper.parseText(fileContents)
-
-//def nodeList = [
-//        [
-//                "ip": "123123",
-//                "name": "node1"
-//        ],
-//        [
-//                "ip": "2222",
-//                "name": "node2"
-//        ]
-//]
 println "Got nodes: " + nodeList.inspect()
 
 
@@ -37,6 +26,7 @@ nodeList.each { node ->
     def params = [
             new StringParameterValue('NAMESPACE', resolver.resolve("NAMESPACE")),
             new StringParameterValue('ENVIRONMENT', resolver.resolve("ENVIRONMENT")),
+            new StringParameterValue('BUILD_SELECTOR', resolver.resolve("BUILD_SELECTOR")),
             new StringParameterValue('NODE_IP', node["ip"]),
             new StringParameterValue('NODE_NAME', node["name"]),
     ]
