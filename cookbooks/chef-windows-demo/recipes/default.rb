@@ -10,32 +10,33 @@ iis_site 'Default Web Site' do
 end
 
 # Set up logging
-# directory "C:\\logs" do
-#   action :create
-# end
-# iis_config "/section:system.applicationHost/sites /siteDefaults.logfile.directory:\"C:\\logs\"" do
-#   action :set
-# end
+directory "C:\\logs" do
+  action :create
+end
+iis_config "/section:system.applicationHost/sites /siteDefaults.logfile.directory:\"C:\\logs\"" do
+  action :set
+end
 
 # Write to a file
-# file "C:\\logs\\test.txt" do
-#   content 'Here is some test text'
-# end
+file "C:\\logs\\test.txt" do
+  content 'Here is some test text'
+end
 
 # Add a registry key
-# registry_key 'HKEY_LOCAL_MACHINE\SOFTWARE\CHEF_WINDOWS_DEMO' do
-#   values [{
-#               :name => 'HELLO',
-#               :type => :expand_string,
-#               :data => 'OMG WTF BBQ'
-#           }]
-#   action :create
-#   # action :delete
-# end
+registry_key 'HKEY_LOCAL_MACHINE\SOFTWARE\CHEF_WINDOWS_DEMO' do
+  values [{
+              :name => 'HELLO',
+              :type => :expand_string,
+              :data => 'OMG WTF BBQ'
+          }]
+  action :create
+  # action :delete
+end
 
 # Start a service
 service 'w32time' do
   action [:enable, :start]
+  # action [:disable, :stop]
 end
 
 # Create a new directory.
@@ -45,10 +46,10 @@ directory "#{node['iis']['docroot']}\\WebApplication1" do
 end
 
 # Write to a file
-# file "#{node['iis']['docroot']}\\WebApplication1\\data.txt" do
-#   item =  data_bag_item('bag1', 'item1')
-#   content node.chef_environment + ' -_- '  + item['attr1']
-# end
+file "#{node['iis']['docroot']}\\WebApplication1\\data.txt" do
+  item =  data_bag_item('bag1', 'item1')
+  content node.chef_environment + ' -_- '  + item['attr1']
+end
 
 # Create a new IIS Pool
 iis_pool 'WebApplication1' do
@@ -83,9 +84,3 @@ webpi_product 'WDeployPS' do
   accept_eula true
   action :install
 end
-
-# octopus_deploy_tentacle 'Tentacle' do
-#   action [:install, :configure]
-#   version '3.2.24'
-#   trusted_cert "#{node['octopus']['tentacle']['instance']['trusted_cert']}"
-# end
