@@ -70,11 +70,6 @@ url_parts = urlparse.urlparse(node_callback_url)
 query_vars = urlparse.parse_qsl(url_parts.query)
 query_vars.append(['NAMESPACE', app_name])
 query_vars.append(['ENVIRONMENT', environment_name])
-# We can't add too much data because this will cause the size of our personality file to grow too large!
-# query_vars.append(['INITIAL_POLICY', initial_policy])
-# query_vars.append(['NODE_IMAGE_ID', image_id])
-# query_vars.append(['NODE_FLAVOR_ID', flavor_id])
-# query_vars.append(['NODE_USERNAME', node_username])
 
 node_callback_url = urlparse.urlunparse([
     url_parts.scheme,
@@ -208,27 +203,6 @@ for p in policies:
     if p["name"] == initial_policy:
         print("Executing policy", initial_policy, policy.id)
         policy.execute()
-
-'''
-Try to update the LB error page with a friendlier version.
-'''
-error_page = '''
-<html><head><meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-<title>No servers available yet</title>
-<style type="text/css">
-body, p, h1 {font-family: Verdana, Arial, Helvetica, sans-serif;}
-h2 {font-family: Arial, Helvetica;}
-</style>
-</head><body>
-<h2>No servers available yet</h2>
-<p>Hang in there! Servers are doing stuff right behind the scenes right now.</p>
-</body></html>
-'''
-# @FIXME This is timing-based - it should wait for the LB to come out of the 'immutable' state!
-# lb.set_error_page(error_page)
-# lb_state = lb.get_state()
-# print(repr(lb_state))
-
 
 if wait:
     end_time = time.time() + wait_timeout
