@@ -5,7 +5,7 @@ license          'Apache 2.0'
 description      'Installs and configures IIS, the W3SVC, WDeployPS'
 long_description 'Installs and configures IIS, the W3SVC, and WDeployPS'
 supports         'windows'
-version          '0.2.20'
+version          '0.2.21'
 
 depends 'webpi'
 depends 'iis'
