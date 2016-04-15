@@ -1,17 +1,18 @@
+Start-Transcript -Path C:\cloud-automation\run.txt -Append
 
-Start-Transcript -Path C:\bootstrap_run_log.txt -Append
-
-# Get the Public IP
-$PublicIp = ((Get-NetIPConfiguration).IPv4Address | Where-Object {$_.InterfaceAlias -eq "public0"}).IpAddress
-Write-Host "Got Public IP $PublicIp"
-
-# Get the hostname
 $Hostname = $env:COMPUTERNAME
-Write-Host "Got Hostname $Hostname"
+$PublicIP = ((Get-NetIPConfiguration).IPv4Address | Where-Object {$_.InterfaceAlias -eq "public0"}).IpAddress
+@{
+    "CallbackURLs" = @(
+        "{{ node_callback_url }}"
+    )
+} | ConvertTo-Json | Out-File c:\cloud-automation\config.json
 
-# Make a callback
-$NodeCallBackUrl="{{ node_callback_url }}"
-Write-Host "Using callback: $NodeCallBackUrl"
-Invoke-Restmethod -Uri $NodeCallBackUrl
+# Fetch a bootstrap script
+$BootURL = ""
+$BootFile = "C:\cloud-automation\bootstrap.ps1"
+(New-Object System.Net.WebClient).DownloadFile($BootURL, $BootFile)
+
+Invoke-Expression -Command $BootFile
 
 Stop-Transcript
