@@ -4,7 +4,7 @@ The minimal core bootstrap task.
 
 * Designed for Windows Server 2012R2.
 * Installs WMF5
-* Sets up an 'on boot' task to run 'setup.ps1'
+* Sets up an 'on boot' task to run 'setup-shim.ps1'
 * Reboots!
 
 #>
@@ -24,18 +24,23 @@ function Install-WMF5 {
 
 # Set up a boot task to call our setup-shim
 function Create-BootTask {
-    if (Get-ScheduledTask -TaskName 'rsBoot' -ErrorAction SilentlyContinue) {
+    $TaskName = 'rsBoot'
+    if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
         return
     }
     $A = New-ScheduledTaskAction `
         -Execute "PowerShell.exe" `
-        -Description "Rackspace Setup on Boot" `
         -Argument "-ExecutionPolicy Bypass -File $SetupShimFileName"
     $T = New-ScheduledTaskTrigger -AtStartup
     $P = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount
     $S = New-ScheduledTaskSettingsSet
-    $D = New-ScheduledTask -Action $A -Principal $P -Trigger $T -Settings $S
-    Register-ScheduledTask rsBoot -InputObject $D
+    $D = New-ScheduledTask `
+        -Action $A `
+        -Principal $P `
+        -Trigger $T `
+        -Settings $S `
+        -Description "Rackspace Setup on Boot"
+    Register-ScheduledTask $TaskName -InputObject $D
 }
 
 
