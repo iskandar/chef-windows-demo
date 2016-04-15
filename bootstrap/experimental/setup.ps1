@@ -140,6 +140,6 @@ Configuration WebNode {
 }
 
 WebNode -ConfigurationData $ConfigurationData
-Start-DscConfiguration -Path .\WebNode -Wait -Verbose
+Start-DscConfiguration -Path .\WebNode -Wait -Verbose -Force
 
 Stop-Transcript
