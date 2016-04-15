@@ -60,6 +60,7 @@ wait_timeout = 1800
 # in the Rackspace Public Cloud (as of 2016-03)
 # Warning: If the contents of these files are too long (1000 bytes each?), then no servers will be created!
 personalities = [
+    {"source" : "./bootstrap/personality/bootstrap.url", "destination": "C:\\cloud-automation\\bootstrap.url"},
     {"source" : "./bootstrap/personality/bootstrap.cmd", "destination": "C:\\cloud-automation\\bootstrap.cmd"},
     {"source" : "./bootstrap/personality/run.txt", "destination": "C:\\cloud-automation\\run.txt"},
 ]
