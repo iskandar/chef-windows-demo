@@ -1,4 +1,4 @@
-Start-Transcript -Path C:\cloud-automation\run.txt -Append
+Start-Transcript -Path C:\cloud-automation\run.log -Append
 
 $Hostname = $env:COMPUTERNAME
 $PublicIP = ((Get-NetIPConfiguration).IPv4Address | Where-Object {$_.InterfaceAlias -eq "public0"}).IpAddress
