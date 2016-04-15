@@ -64,6 +64,7 @@ personalities = [
     {"source" : "./bootstrap/personality/setup.url", "destination": "C:\\cloud-automation\\setup.url"},
     {"source" : "./bootstrap/personality/bootstrap.cmd", "destination": "C:\\cloud-automation\\bootstrap.cmd"},
     {"source" : "./bootstrap/personality/run.txt", "destination": "C:\\cloud-automation\\run.txt"},
+    {"source" : "./bootstrap/personality/setup-shim.txt", "destination": "C:\\cloud-automation\\setup-shim.txt"},
 ]
 
 # Parse the callback URL and add new vars

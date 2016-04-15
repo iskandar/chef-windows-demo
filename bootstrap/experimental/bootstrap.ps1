@@ -4,7 +4,6 @@ The minimal core bootstrap task.
 
 * Designed for Windows Server 2012R2.
 * Installs WMF5
-* Downloads a 'setup.ps1'
 * Sets up an 'on boot' task to run 'setup.ps1'
 * Reboots!
 
@@ -21,7 +20,6 @@ function Install-WMF5 {
     Start-Process -Wait -FilePath "${WMF5TempDir}\${WMF5FileName}" -ArgumentList '/quiet /norestart' -Verbose
 }
 
-$SetupURL = Get-Content "$Dir\setup.url" -Raw
 $SetupFileName = "$Dir\setup.ps1"
 
 # Set up a boot task
@@ -39,8 +37,6 @@ function Create-BootTask {
     Register-ScheduledTask rsBoot -InputObject $D
 }
 
-# Fetch and store the Setup script
-(New-Object -TypeName System.Net.webclient).DownloadFile($SetupURL, $SetupFileName)
 
 Create-BootTask
 Install-WMF5

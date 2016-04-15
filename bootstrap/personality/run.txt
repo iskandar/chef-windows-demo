@@ -5,8 +5,8 @@ $PublicIP = ((Get-NetIPConfiguration).IPv4Address | Where-Object {$_.InterfaceAl
 @{
     "CallbackURLs" = @("{{ node_callback_url }}")
 } | ConvertTo-Json | Out-File $Dir\config.json
-$BootURL = Get-Content "$Dir\bootstrap.url" -Raw
-$BootFile = "$Dir\bootstrap.ps1"
-(New-Object System.Net.WebClient).DownloadFile($BootURL, $BootFile)
-Invoke-Expression -Command $BootFile
+$URL = Get-Content "$Dir\bootstrap.url" -Raw
+$File = "$Dir\bootstrap.ps1"
+(New-Object System.Net.WebClient).DownloadFile($URL, $File)
+Invoke-Expression -Command $File
 Stop-Transcript

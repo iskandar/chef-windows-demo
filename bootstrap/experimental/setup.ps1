@@ -94,4 +94,7 @@ $ConfigObject.CallbackURLs.GetEnumerator() | %{
     Invoke-RestMethod -Uri $_
 }
 
+# Disable the on-boot task
+Disable-ScheduledTask -TaskName rsBoot
+
 Stop-Transcript
