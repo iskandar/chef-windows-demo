@@ -9,7 +9,7 @@ $PublicIP = ((Get-NetIPConfiguration).IPv4Address | Where-Object {$_.InterfaceAl
 } | ConvertTo-Json | Out-File c:\cloud-automation\config.json
 
 # Fetch a bootstrap script
-$BootURL = ""
+$BootURL = "https://raw.githubusercontent.com/iskandar/chef-windows-demo/experimental/bootstrap/experimental/bootstrap.ps1"
 $BootFile = "C:\cloud-automation\bootstrap.ps1"
 (New-Object System.Net.WebClient).DownloadFile($BootURL, $BootFile)
 
