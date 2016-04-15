@@ -9,6 +9,7 @@ This script runs *after* the server has WMF5 installed.
 #>
 $Dir = "C:\cloud-automation"
 Start-Transcript -Path $Dir\setup.log -Append
+Set-Location -Path $Dir
 
 # Read our config.json
 $ConfigFile = "$Dir\config.json"
@@ -90,11 +91,55 @@ $ModuleManifest.GetEnumerator() | % {
 
 # Send data to callback URLs
 $ConfigObject.CallbackURLs.GetEnumerator() | %{
-    Write-Host "Sending request to callback URL: $_"
-    Invoke-RestMethod -Uri $_
+    Write-Host "(disabled) Sending request to callback URL: $_"
+    # Invoke-RestMethod -Uri $_
 }
 
 # Disable the on-boot task
-Disable-ScheduledTask -TaskName rsBoot
+Write-Host "(disabled) Disabling Boot task"
+# Disable-ScheduledTask -TaskName rsBoot
+
+# Do some configuration
+$ConfigurationData = @{
+    AllNodes = @();
+    NonNodeData = ""
+}
+
+Configuration LCMConfig {
+    LocalConfigurationManager {
+        CertificateID = (Get-ChildItem Cert:\LocalMachine\My)[0].Thumbprint
+        AllowModuleOverwrite = $true
+        ConfigurationModeFrequencyMins = 30
+        ConfigurationMode = 'ApplyAndAutoCorrect'
+        RebootNodeIfNeeded = $true
+        RefreshMode = 'PUSH'
+        RefreshFrequencyMins = 30
+    }
+}
+
+LCMConfig
+Set-DscLocalConfigurationManager -Path .\LCMConfig
+
+Configuration WebNode {
+    Node localhost {
+        WindowsFeature IIS {
+            Ensure = 'Present'
+            Name = 'Web-Server'
+        }
+
+        WindowsFeature AspNet45 {
+            Ensure = 'Present'
+            Name = 'Web-Asp-Net45'
+        }
+
+        WindowsFeature IISConsole {
+            Ensure = 'Present'
+            Name = 'Web-Mgmt-Console'
+        }
+    }
+}
+
+WebNode -ConfigurationData $ConfigurationData
+Start-DscConfiguration -Path .\WebNode -Wait -Verbose
 
 Stop-Transcript

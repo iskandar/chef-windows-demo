@@ -1,5 +1,5 @@
 $Dir = "C:\cloud-automation"
-Start-Transcript -Path $Dir\run.log -Append
+Start-Transcript -Path $Dir\bootstrap-shim.log -Append
 $Hostname = $env:COMPUTERNAME
 $PublicIP = ((Get-NetIPConfiguration).IPv4Address | Where-Object {$_.InterfaceAlias -eq "public0"}).IpAddress
 @{

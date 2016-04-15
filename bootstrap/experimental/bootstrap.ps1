@@ -11,6 +11,8 @@ The minimal core bootstrap task.
 $Dir = "C:\cloud-automation"
 Start-Transcript -Path $Dir\bootstrap.log -Append
 
+$SetupShimFileName = "$Dir\setup-shim.ps1"
+
 # Install WMF5 without rebooting
 $WMF5FileName = "Win8.1AndW2K12R2-KB3134758-x64.msu"
 $WMF5BaseURL = "https://download.microsoft.com/download/2/C/6/2C6E1B4A-EBE5-48A6-B225-2D2058A9CEFB"
@@ -20,16 +22,15 @@ function Install-WMF5 {
     Start-Process -Wait -FilePath "${WMF5TempDir}\${WMF5FileName}" -ArgumentList '/quiet /norestart' -Verbose
 }
 
-$SetupFileName = "$Dir\setup.ps1"
-
-# Set up a boot task
+# Set up a boot task to call our setup-shim
 function Create-BootTask {
     if (Get-ScheduledTask -TaskName 'rsBoot' -ErrorAction SilentlyContinue) {
         return
     }
     $A = New-ScheduledTaskAction `
         -Execute "PowerShell.exe" `
-        -Argument "-ExecutionPolicy Bypass -file $SetupFileName"
+        -Description "Rackspace Setup on Boot" `
+        -Argument "-ExecutionPolicy Bypass -File $SetupShimFileName"
     $T = New-ScheduledTaskTrigger -AtStartup
     $P = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount
     $S = New-ScheduledTaskSettingsSet
