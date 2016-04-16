@@ -8,6 +8,7 @@ This script runs *after* the server has WMF5 installed.
 
 #>
 $Dir = "C:\cloud-automation"
+New-Item -Path $Dir\logs -ItemType Directory -ErrorAction SilentlyContinue
 Start-Transcript -Path $Dir\logs\setup.log -Append
 Set-Location -Path $Dir
 
