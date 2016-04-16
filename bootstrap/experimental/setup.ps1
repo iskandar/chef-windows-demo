@@ -35,6 +35,8 @@ Get-PackageProvider
 # Let's trust the PSGallery source
 Set-PackageSource -Trusted -Name PSGallery -ProviderName PowerShellGet
 Get-PackageSource
+
+Set-PSRepository -InstallationPolicy Trusted -name PSGallery
 Get-PSRepository
 
 <#
