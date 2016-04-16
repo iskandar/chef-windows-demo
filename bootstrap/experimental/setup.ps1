@@ -12,149 +12,86 @@ New-Item -Path $Dir\logs -ItemType Directory -ErrorAction SilentlyContinue
 Start-Transcript -Path $Dir\logs\setup.log -Append
 Set-Location -Path $Dir
 
-# Read our config.json
-$ConfigFile = "$Dir\config.json"
-$ConfigObject = (Get-Content $ConfigFile) -join "`n" | ConvertFrom-Json
-
-$PSVersionTable
-
-Get-InstalledModule
-Get-Module
-
-Get-DscConfiguration
-Get-DscConfigurationStatus
-
-Get-PackageSource
-Get-PackageProvider
-Get-PSRepository
-
 # Install the NuGet package provider
 Install-PackageProvider -Name NuGet -Force
-Get-PackageProvider
 
 # Let's trust the PSGallery source
 Set-PackageSource -Trusted -Name PSGallery -ProviderName PowerShellGet
-Get-PackageSource
-
 Set-PSRepository -InstallationPolicy Trusted -name PSGallery
-Get-PSRepository
+
+# Load our bootstrap config
+$BootstrapConfig = (Get-Content $Dir\bootstrap-config.json) -join "`n" | ConvertFrom-Json
+
+# Download our setup.json file
+# Load our remote Modules config file
+$URI = Get-Content "$Dir\setup.url" -Raw
+$SetupFile = "$Dir\setup.json"
+(New-Object System.Net.WebClient).DownloadFile($URI, $SetupFile)
+$SetupConfig = (Get-Content $SetupFile) -join "`n" | ConvertFrom-Json
 
 <#
-Our Module manifest contains an explicit RequiredVersion that MUST be set
+
+Install PSGallery modules
+
+Our Module manifest contains explicit RequiredVersion values that MUST be set
 to avoid any surprises.
+
 #>
-$ModuleManifest = @{
-    "xPSDesiredStateConfiguration" = @{
-        "Name" = "xPSDesiredStateConfiguration"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "3.9.0.0"
-    }
-    "xTimeZone" = @{
-        "Name" = "xTimeZone"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "1.3.0.0"
-    }
-    "xComputerManagement" = @{
-        "Name" = "xComputerManagement"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "1.5.0.0"
-    }
-    "xNetworking" = @{
-        "Name" = "xNetworking"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "2.8.0.0"
-    }
-    "xCertificate" = @{
-        "Name" = "xCertificate"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "1.1.0.0"
-    }
-    "xPendingReboot" = @{
-        "Name" = "xPendingReboot"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "0.3.0.0"
-    }
-    "xWinEventLog" = @{
-        "Name" = "xWinEventLog"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "1.1.0.0"
-    }
-    "xWebAdministration" = @{
-        "Name" = "xWebAdministration"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "1.10.0.0"
-    }
-    "xWebDeploy" = @{
-        "Name" = "xWebDeploy"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "1.1.0.0"
-    }
-    "xSystemSecurity" = @{
-        "Name" = "xSystemSecurity"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "1.1.0.0"
-    }
-    # https://github.com/iainbrighton/GitHubRepository
-    "GitHubRepository" = @{
-        "Name" = "GitHubRepository"
-        "Repository" = "PSGallery"
-        "RequiredVersion" = "1.0.0"
-    }
-}
-$ModuleManifest.GetEnumerator() | % {
-    Write-Host "Installing $($_.value["Name"]) version $($_.value["RequiredVersion"]); Repo $($_.value["Repository"])"
-    Install-Module -Verbose $_.value["Name"] `
-        -Repository $_.value["Repository"] `
-        -RequiredVersion $_.value["RequiredVersion"]
+$SetupConfig.PSGallery.GetEnumerator() | % {
+    Write-Host "Installing $($_.Name) version $($_.RequiredVersion)"
+    Install-Module -Verbose $_.Name `
+        -Repository $_.Repository `
+        -RequiredVersion $_.RequiredVersion
 }
 
-# Install Modules from Github
+<#
+
+Install Modules from Github
+
+#>
 Import-Module -Name GitHubRepository
-$GitManifest = @{
-    "rsWPI" = @{
-        "Type" = "GitHubRepository"
-        "Owner" = "rsWinAutomationSupport"
-        "Name" = "rsWPI"
-        # Using a 'v2.1.0' tag name fails due to odd directory naming (missing the 'v')
-        "RequiredVersion" = "master"
-    }
-    "rsPackageSourceManager" = @{
-        "Type" = "GitHubRepository"
-        "Owner" = "rsWinAutomationSupport"
-        "Name" = "rsPackageSourceManager"
-        "RequiredVersion" = "1.0.4"
-    }
-}
-$GitManifest.GetEnumerator() | % {
-    Write-Host "Installing $($_.value["Owner"])/$($_.value["Name"]) version $($_.value["RequiredVersion"]);"
+$SetupConfig.GitHub.GetEnumerator() | % {
+    Write-Host "Installing $($_.Owner)/$($_.Name) version $($_.RequiredVersion);"
     Install-GitHubRepository `
-        -Owner $_.value["Owner"] `
-        -Repository $_.value["Name"] `
-        -Branch $_.value["RequiredVersion"] `
+        -Owner $_.Owner `
+        -Repository $_.Name `
+        -Branch $_.RequiredVersion `
         -Force -Verbose
 }
 
-$BaseURI = "https://raw.githubusercontent.com/iskandar/chef-windows-demo/experimental/bootstrap/experimental"
-$ConfigurationManifest = @{
-    "main" = @{
-        "URI" = "${BaseURI}/configure.ps1"
-        "Destination" = "configure.ps1"
-    }
-}
-$Dir = "C:\cloud-automation"
-$ConfigurationManifest.GetEnumerator() | % {
-    Write-Host "Downloading $($_.value["URI"])"
+<#
+
+Run remote scripts
+
+#>
+$SetupConfig.Scripts.GetEnumerator() | % {
+    Write-Host "Downloading $($_.URI)"
     # Let's always download our files before we run them. This will help us debug and test.
-    $Destination = "$Dir\$($_.value["Destination"])"
-    (New-Object System.Net.WebClient).DownloadFile($_.value["URI"], $Destination)
+    $Destination = "$Dir\$($_.Destination)"
+    (New-Object System.Net.WebClient).DownloadFile($_.URI, $Destination)
     Write-Host "Running ${Destination}"
     Invoke-Expression -Command $Destination
 }
 
-# Send data to callback URLs
-$ConfigObject.CallbackURLs.GetEnumerator() | %{
-    Write-Host "(disabled) Sending request to callback URL: $_"
-    # Invoke-RestMethod -Uri $_
+<#
+
+Send data to callback URLs
+
+#>
+$PublicIP = ((Get-NetIPConfiguration).IPv4Address | Where-Object {$_.InterfaceAlias -eq "public0"}).IpAddress
+
+$SetupConfig.CallbackURLs.GetEnumerator() | %{
+    Write-Host "Sending request to callback URL: $_"
+    $Request = [System.UriBuilder]$_.URI
+    $Parameters = [System.Web.HttpUtility]::ParseQueryString($Request.Query)
+    # Add standard parameters
+    $Parameters['NODE_NAME'] = $env:COMPUTERNAME
+    $Parameters['NODE_IP'] = $PublicIP
+    $Parameters['NAMESPACE'] = $BootstrapConfig.app_name
+    $Parameters['ENVIRONMENT'] = $BootstrapConfig.environment_name
+    $Request.Query = $Parameters.ToString()
+    # Call the callback
+    Invoke-RestMethod -Method Get -Uri $Request.Uri -Verbose
 }
 
 # Disable the on-boot task

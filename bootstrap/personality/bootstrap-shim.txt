@@ -1,13 +1,8 @@
 $Dir = "C:\cloud-automation"
 New-Item -Path $Dir\logs -ItemType Directory -ErrorAction SilentlyContinue
 Start-Transcript -Path $Dir\logs\bootstrap-shim.log -Append
-$Hostname = $env:COMPUTERNAME
-$PublicIP = ((Get-NetIPConfiguration).IPv4Address | Where-Object {$_.InterfaceAlias -eq "public0"}).IpAddress
-@{
-    "CallbackURLs" = @("{{ node_callback_url }}")
-} | ConvertTo-Json | Out-File $Dir\config.json
-$URL = Get-Content "$Dir\bootstrap.url" -Raw
+$Config = (Get-Content $Dir\bootstrap-config.json) -join "`n" | ConvertFrom-Json
 $File = "$Dir\bootstrap.ps1"
-(New-Object System.Net.WebClient).DownloadFile($URL, $File)
+(New-Object System.Net.WebClient).DownloadFile($Config.bootstrap, $File)
 Invoke-Expression -Command $File
 Stop-Transcript

@@ -1,7 +1,8 @@
 $Dir = "C:\cloud-automation"
+New-Item -Path $Dir\logs -ItemType Directory -ErrorAction SilentlyContinue
 Start-Transcript -Path $Dir\logs\setup-shim.log -Append
-$URL = Get-Content "$Dir\setup.url" -Raw
+$Config = (Get-Content $Dir\bootstrap-config.json) -join "`n" | ConvertFrom-Json
 $File = "$Dir\setup.ps1"
-(New-Object System.Net.WebClient).DownloadFile($URL, $File)
+(New-Object System.Net.WebClient).DownloadFile($Config.setup, $File)
 Invoke-Expression -Command $File
 Stop-Transcript

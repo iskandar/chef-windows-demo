@@ -29,6 +29,11 @@ image_id = os.environ.get('NODE_IMAGE_ID', "a35e8afc-cae9-4e38-8441-2cd465f79f7b
 flavor_id = os.environ.get('NODE_FLAVOR_ID', "general1-2")
 domain_name = os.environ.get('DOMAIN_NAME', None)
 
+# The base URL for our bootstrap.ps1 and setup.ps1 scripts
+base_script_url = os.environ.get('BASE_SCRIPT_URL', "https://raw.githubusercontent.com/iskandar/chef-windows-demo"
+                                                   "/experimental/bootstrap/experimental")
+
+
 # Set up a callback URL that our node will request after booting up. This can be used to trigger bootstrapping.
 # $PublicIp and $Hostname vars are populated in the Powershell 'run.txt' script.
 default_node_callback_url = "http://requestb.in/18vsdkl1?NODE_IP=$PublicIp&NODE_NAME=$Hostname"
@@ -59,12 +64,29 @@ wait_timeout = 1800
 # Prepare data for server 'personalities', which is the only way to inject files and bootstrap Windows Servers
 # in the Rackspace Public Cloud (as of 2016-03)
 # Warning: If the contents of these files are too long (1000 bytes each?), then no servers will be created!
+personality_dir = "./bootstrap/personality"
+dest_dir = "C:\\cloud-automation"
 personalities = [
-    {"source" : "./bootstrap/personality/bootstrap.url", "destination": "C:\\cloud-automation\\bootstrap.url"},
-    {"source" : "./bootstrap/personality/bootstrap.cmd", "destination": "C:\\cloud-automation\\bootstrap.cmd"},
-    {"source" : "./bootstrap/personality/bootstrap-shim.txt", "destination": "C:\\cloud-automation\\bootstrap-shim.txt"},
-    {"source" : "./bootstrap/personality/setup.url", "destination": "C:\\cloud-automation\\setup.url"},
-    {"source" : "./bootstrap/personality/setup-shim.txt", "destination": "C:\\cloud-automation\\setup-shim.txt"},
+    {
+        "source" : personality_dir + "/bootstrap.cmd",
+        "destination": dest_dir + "\\bootstrap.cmd"
+    },
+    {
+        "source" : personality_dir + "/bootstrap-config.json",
+        "destination": dest_dir + "\\bootstrap-config.json"
+    },
+    {
+        "source" : personality_dir + "/bootstrap-shim.txt",
+        "destination": dest_dir + "\\bootstrap-shim.txt"
+    },
+    {
+        "source" : personality_dir + "/setup.url",
+        "destination": dest_dir + "\\setup.url"
+    },
+    {
+        "source" : personality_dir + "/setup-shim.txt",
+        "destination": dest_dir + "\\setup-shim.txt"
+    },
 ]
 
 # Parse the callback URL and add new vars
@@ -85,6 +107,7 @@ node_callback_url = urlparse.urlunparse([
 
 # Use templating with our personality files
 template_vars = {
+    "base_script_url": base_script_url,
     "rackspace_username": os.environ.get('OS_USERNAME'),
     "app_name": app_name,
     "environment_name": environment_name,
