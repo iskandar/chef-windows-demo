@@ -9,7 +9,7 @@ The minimal core bootstrap task.
 
 #>
 $Dir = "C:\cloud-automation"
-Start-Transcript -Path $Dir\bootstrap.log -Append
+Start-Transcript -Path $Dir\logs\bootstrap.log -Append
 
 $SetupShimFileName = "$Dir\setup-shim.ps1"
 

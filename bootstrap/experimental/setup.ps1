@@ -8,7 +8,7 @@ This script runs *after* the server has WMF5 installed.
 
 #>
 $Dir = "C:\cloud-automation"
-Start-Transcript -Path $Dir\setup.log -Append
+Start-Transcript -Path $Dir\logs\setup.log -Append
 Set-Location -Path $Dir
 
 # Read our config.json

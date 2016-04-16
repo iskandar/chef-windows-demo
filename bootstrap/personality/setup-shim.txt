@@ -1,5 +1,5 @@
 $Dir = "C:\cloud-automation"
-Start-Transcript -Path $Dir\setup-shim.log -Append
+Start-Transcript -Path $Dir\logs\setup-shim.log -Append
 $URL = Get-Content "$Dir\setup.url" -Raw
 $File = "$Dir\setup.ps1"
 (New-Object System.Net.WebClient).DownloadFile($URL, $File)
