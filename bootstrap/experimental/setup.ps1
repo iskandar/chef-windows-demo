@@ -41,6 +41,11 @@ Our Module manifest contains an explicit RequiredVersion that MUST be set
 to avoid any surprises.
 #>
 $ModuleManifest = @{
+    "xPSDesiredStateConfiguration" = @{
+        "Name" = "xPSDesiredStateConfiguration"
+        "Repository" = "PSGallery"
+        "RequiredVersion" = "3.9.0.0"
+    }
     "xTimeZone" = @{
         "Name" = "xTimeZone"
         "Repository" = "PSGallery"
@@ -81,12 +86,48 @@ $ModuleManifest = @{
         "Repository" = "PSGallery"
         "RequiredVersion" = "1.1.0.0"
     }
+    "xSystemSecurity" = @{
+        "Name" = "xSystemSecurity"
+        "Repository" = "PSGallery"
+        "RequiredVersion" = "1.1.0.0"
+    }
+    # https://github.com/iainbrighton/GitHubRepository
+    "GitHubRepository" = @{
+        "Name" = "GitHubRepository"
+        "Repository" = "PSGallery"
+        "RequiredVersion" = "1.0.0"
+    }
 }
 $ModuleManifest.GetEnumerator() | % {
     Write-Host "Installing $($_.value["Name"]) version $($_.value["RequiredVersion"]); Repo $($_.value["Repository"])"
     Install-Module -Verbose $_.value["Name"] `
         -Repository $_.value["Repository"] `
         -RequiredVersion $_.value["RequiredVersion"]
+}
+
+# Install Modules from Github
+Import-Module -Name GitHubRepository
+$GitManifest = @{
+    "rsWPI" = @{
+        "Type" = "GitRelease"
+        "Name" = "rsWPI"
+        "Owner" = "rsWinAutomationSupport"
+        "RequiredVersion" = "v2.1.0"
+    }
+    "rsPackageSourceManager" = @{
+        "Type" = "GitRelease"
+        "Name" = "rsPackageSourceManager"
+        "Owner" = "rsWinAutomationSupport"
+        "RequiredVersion" = "1.0.4"
+    }
+}
+$GitManifest.GetEnumerator() | % {
+    Write-Host "Installing $($_.value["Name"]) version $($_.value["RequiredVersion"]);"
+    Install-GitHubRepository `
+        -Owner $_.value["Owner"] `
+        -Repository $_.value["Name"] `
+        -Branch $_.value["RequiredVersion"] `
+        -Force -Verbose
 }
 
 # Send data to callback URLs
@@ -121,20 +162,30 @@ LCMConfig
 Set-DscLocalConfigurationManager -Path .\LCMConfig
 
 Configuration WebNode {
+    Import-DscResource -ModuleName xPSDesiredStateConfiguration,rsWPI
     Node localhost {
         WindowsFeature IIS {
             Ensure = 'Present'
             Name = 'Web-Server'
         }
-
         WindowsFeature AspNet45 {
             Ensure = 'Present'
             Name = 'Web-Asp-Net45'
         }
-
         WindowsFeature IISConsole {
             Ensure = 'Present'
             Name = 'Web-Mgmt-Console'
+        }
+        WindowsFeature WebManagementService {
+            Ensure = "Present"
+            Name = "Web-Mgmt-Service"
+        }
+        WindowsFeature MSMQ {
+            Name = "MSMQ"
+            Ensure = "Present"
+        }
+        rsWPI MyWPI {
+            Product = "WDeployPS"
         }
     }
 }
@@ -142,4 +193,5 @@ Configuration WebNode {
 WebNode -ConfigurationData $ConfigurationData
 Start-DscConfiguration -Path .\WebNode -Wait -Verbose -Force
 
+Write-Host "All Done"
 Stop-Transcript
