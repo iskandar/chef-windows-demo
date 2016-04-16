@@ -112,25 +112,43 @@ $ModuleManifest.GetEnumerator() | % {
 Import-Module -Name GitHubRepository
 $GitManifest = @{
     "rsWPI" = @{
-        "Type" = "GitRelease"
-        "Name" = "rsWPI"
+        "Type" = "GitHubRepository"
         "Owner" = "rsWinAutomationSupport"
-        "RequiredVersion" = "v2.1.0"
+        "Name" = "rsWPI"
+        # Using a 'v2.1.0' tag name fails due to odd directory naming (missing the 'v')
+        "RequiredVersion" = "master"
     }
     "rsPackageSourceManager" = @{
-        "Type" = "GitRelease"
-        "Name" = "rsPackageSourceManager"
+        "Type" = "GitHubRepository"
         "Owner" = "rsWinAutomationSupport"
+        "Name" = "rsPackageSourceManager"
         "RequiredVersion" = "1.0.4"
     }
 }
 $GitManifest.GetEnumerator() | % {
-    Write-Host "Installing $($_.value["Name"]) version $($_.value["RequiredVersion"]);"
+    Write-Host "Installing $($_.value["Owner"])/$($_.value["Name"]) version $($_.value["RequiredVersion"]);"
     Install-GitHubRepository `
         -Owner $_.value["Owner"] `
         -Repository $_.value["Name"] `
         -Branch $_.value["RequiredVersion"] `
         -Force -Verbose
+}
+
+$BaseURI = "https://raw.githubusercontent.com/iskandar/chef-windows-demo/experimental/bootstrap/experimental"
+$ConfigurationManifest = @{
+    "main" = @{
+        "URI" = "${BaseURI}/configure.ps1"
+        "Destination" = "configure.ps1"
+    }
+}
+$Dir = "C:\cloud-automation"
+$ConfigurationManifest.GetEnumerator() | % {
+    Write-Host "Downloading $($_.value["URI"])"
+    # Let's always download our files before we run them. This will help us debug and test.
+    $Destination = "$Dir\$($_.value["Destination"])"
+    (New-Object System.Net.WebClient).DownloadFile($_.value["URI"], $Destination)
+    Write-Host "Running ${Destination}"
+    Invoke-Expression -Command $Destination
 }
 
 # Send data to callback URLs
@@ -142,59 +160,6 @@ $ConfigObject.CallbackURLs.GetEnumerator() | %{
 # Disable the on-boot task
 Write-Host "(disabled) Disabling Boot task"
 # Disable-ScheduledTask -TaskName rsBoot
-
-# Do some configuration
-$ConfigurationData = @{
-    AllNodes = @();
-    NonNodeData = ""
-}
-
-Configuration LCMConfig {
-    LocalConfigurationManager {
-        CertificateID = (Get-ChildItem Cert:\LocalMachine\My)[0].Thumbprint
-        AllowModuleOverwrite = $true
-        ConfigurationModeFrequencyMins = 30
-        ConfigurationMode = 'ApplyAndAutoCorrect'
-        RebootNodeIfNeeded = $true
-        RefreshMode = 'PUSH'
-        RefreshFrequencyMins = 30
-    }
-}
-
-LCMConfig
-Set-DscLocalConfigurationManager -Path .\LCMConfig
-
-Configuration WebNode {
-    Import-DscResource -ModuleName xPSDesiredStateConfiguration,rsWPI
-    Node localhost {
-        WindowsFeature IIS {
-            Ensure = 'Present'
-            Name = 'Web-Server'
-        }
-        WindowsFeature AspNet45 {
-            Ensure = 'Present'
-            Name = 'Web-Asp-Net45'
-        }
-        WindowsFeature IISConsole {
-            Ensure = 'Present'
-            Name = 'Web-Mgmt-Console'
-        }
-        WindowsFeature WebManagementService {
-            Ensure = "Present"
-            Name = "Web-Mgmt-Service"
-        }
-        WindowsFeature MSMQ {
-            Name = "MSMQ"
-            Ensure = "Present"
-        }
-        rsWPI MyWPI {
-            Product = "WDeployPS"
-        }
-    }
-}
-
-WebNode -ConfigurationData $ConfigurationData
-Start-DscConfiguration -Path .\WebNode -Wait -Verbose -Force
 
 Write-Host "All Done"
 Stop-Transcript
