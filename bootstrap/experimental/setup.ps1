@@ -19,6 +19,13 @@ Install-PackageProvider -Name NuGet -Force
 Set-PackageSource -Trusted -Name PSGallery -ProviderName PowerShellGet
 Set-PSRepository -InstallationPolicy Trusted -name PSGallery
 
+# Example of a customer PSRepository:
+#Register-PSRepository -Name "nuget.org" `
+#    -InstallationPolicy Trusted `
+#    –SourceLocation "https://www.nuget.org/api/v2" `
+#    -PublishLocation "https://www.nuget.org/api/v2/Packages"
+#Set-PackageSource -Trusted -Name nuget.org -ProviderName PowerShellGet
+
 # Load our bootstrap config
 $BootstrapConfig = (Get-Content $Dir\bootstrap-config.json) -join "`n" | ConvertFrom-Json
 
