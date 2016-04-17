@@ -1,7 +1,6 @@
 {
     "bootstrap": "{{base_script_url}}/bootstrap.ps1",
     "setup": "{{base_script_url}}/setup.ps1",
-    "node_callback_url": "{{node_callback_url}}",
     "app_name": "{{app_name}}",
     "environment_name": "{{environment_name}}",
     "domain_name": "{{domain_name}}",

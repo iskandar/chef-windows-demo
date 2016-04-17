@@ -31,13 +31,14 @@ domain_name = os.environ.get('DOMAIN_NAME', None)
 
 # The base URL for our bootstrap.ps1 and setup.ps1 scripts
 base_script_url = os.environ.get('BASE_SCRIPT_URL', "https://raw.githubusercontent.com/iskandar/chef-windows-demo"
-                                                   "/experimental/bootstrap/experimental")
+                                                    "/experimental/bootstrap/experimental")
+setup_url = os.environ.get('SETUP_URL', "https://raw.githubusercontent.com/iskandar/sample-dsc-systems/"
+                                        "master/setup.json")
 
 
 # Set up a callback URL that our node will request after booting up. This can be used to trigger bootstrapping.
 # $PublicIp and $Hostname vars are populated in the Powershell 'run.txt' script.
-default_node_callback_url = "http://requestb.in/18vsdkl1?NODE_IP=$PublicIp&NODE_NAME=$Hostname"
-node_callback_url = os.environ.get('NODE_CALLBACK_URL', default_node_callback_url)
+node_callback_url = os.environ.get('NODE_CALLBACK_URL', "http://requestb.in/18vsdkl1?FOO=BAR")
 
 # Authenticate
 pyrax.set_setting("identity_type", "rackspace")
@@ -108,6 +109,7 @@ node_callback_url = urlparse.urlunparse([
 # Use templating with our personality files
 template_vars = {
     "base_script_url": base_script_url,
+    "setup_url": setup_url,
     "rackspace_username": os.environ.get('OS_USERNAME'),
     "app_name": app_name,
     "environment_name": environment_name,
