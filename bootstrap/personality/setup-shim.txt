@@ -4,5 +4,5 @@ Start-Transcript -Path $Dir\logs\setup-shim.log -Append
 $Config = (Get-Content $Dir\bootstrap-config.json) -join "`n" | ConvertFrom-Json
 $File = "$Dir\setup.ps1"
 (New-Object System.Net.WebClient).DownloadFile($Config.setup, $File)
-Invoke-Expression -Command $File
 Stop-Transcript
+Invoke-Expression -Command $File
